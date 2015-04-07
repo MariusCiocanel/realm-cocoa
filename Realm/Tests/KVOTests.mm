@@ -137,6 +137,7 @@ public:
 @property (nonatomic, strong) RLMRealm *realm;
 @end
 
+// Assert that `recorder` has a notification at `index` and return it if so
 #define AssertNotification(recorder, index) ([&]{ \
     (recorder).refresh(); \
     XCTAssertGreaterThan((recorder).notifications.size(), index); \
@@ -156,7 +157,7 @@ public:
 // still to test:
 //   - standalone
 //   - standalone added to realm after observer added
-//   - ignored properties
+//   - keypaths
 //   - Prior called at right time
 //   - Batch array modification
 
