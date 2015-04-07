@@ -326,14 +326,16 @@ public:
     {
         KVORecorder r(self, obj, @"int32Col", 0);
         obj.int32Col = 0;
-        r.refresh();
-        XCTAssertNil(r.notifications[0].change[NSKeyValueChangeOldKey]);
+        if (KVONotification *note = AssertNotification(r, 0U)) {
+            XCTAssertNil(note->change[NSKeyValueChangeOldKey]);
+        }
     }
     {
         KVORecorder r(self, obj, @"int32Col", NSKeyValueObservingOptionOld);
         obj.int32Col = 0;
-        r.refresh();
-        XCTAssertNotNil(r.notifications[0].change[NSKeyValueChangeOldKey]);
+        if (KVONotification *note = AssertNotification(r, 0U)) {
+            XCTAssertNotNil(note->change[NSKeyValueChangeOldKey]);
+        }
     }
 }
 
@@ -343,14 +345,16 @@ public:
     {
         KVORecorder r(self, obj, @"int32Col", 0);
         obj.int32Col = 0;
-        r.refresh();
-        XCTAssertNil(r.notifications[0].change[NSKeyValueChangeNewKey]);
+        if (KVONotification *note = AssertNotification(r, 0U)) {
+            XCTAssertNil(note->change[NSKeyValueChangeNewKey]);
+        }
     }
     {
         KVORecorder r(self, obj, @"int32Col", NSKeyValueObservingOptionNew);
         obj.int32Col = 0;
-        r.refresh();
-        XCTAssertNotNil(r.notifications[0].change[NSKeyValueChangeNewKey]);
+        if (KVONotification *note = AssertNotification(r, 0U)) {
+            XCTAssertNotNil(note->change[NSKeyValueChangeNewKey]);
+        }
     }
 }
 
@@ -362,10 +366,14 @@ public:
     r.refresh();
 
     XCTAssertEqual(2U, r.notifications.size());
-    XCTAssertNil(r.notifications[0].change[NSKeyValueChangeNewKey]);
-    XCTAssertEqualObjects(@YES, r.notifications[0].change[NSKeyValueChangeNotificationIsPriorKey]);
-    XCTAssertNotNil(r.notifications[1].change[NSKeyValueChangeNewKey]);
-    XCTAssertNil(r.notifications[1].change[NSKeyValueChangeNotificationIsPriorKey]);
+    if (KVONotification *note = AssertNotification(r, 0U)) {
+        XCTAssertNil(note->change[NSKeyValueChangeNewKey]);
+        XCTAssertEqualObjects(@YES, note->change[NSKeyValueChangeNotificationIsPriorKey]);
+    }
+    if (KVONotification *note = AssertNotification(r, 1U)) {
+        XCTAssertNotNil(note->change[NSKeyValueChangeNewKey]);
+        XCTAssertNil(note->change[NSKeyValueChangeNotificationIsPriorKey]);
+    }
 }
 
 - (void)testAllPropertyTypes {
@@ -563,4 +571,20 @@ public:
 - (void)testIgnoredProperty {
     // ignored properties do not notify other accessors for the same row
 }
+@end
+
+@interface KvoStandaloneObjectTests : KVOSingleObjectTests
+@end
+@implementation KvoStandaloneObjectTests
+- (id)createObject {
+    KVOObject *obj = [KVOObject new];
+    obj.int16Col = 1;
+    obj.int32Col = 2;
+    obj.int64Col = 3;
+    obj.binaryCol = NSData.data;
+    obj.stringCol = @"";
+    obj.dateCol = [NSDate dateWithTimeIntervalSinceReferenceDate:0];
+    return obj;
+}
+
 @end
