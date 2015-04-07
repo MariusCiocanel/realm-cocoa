@@ -513,6 +513,10 @@ public:
     copy->_row = obj->_row;
     return copy;
 }
+
+- (void)testIgnoredProperty {
+    // ignored properties do not notify other accessors for the same row
+}
 @end
 
 // Run the tests observing an accessor from a different RLMRealm instance
@@ -545,5 +549,9 @@ public:
 
 - (bool)collapsesNotifications {
     return true;
+}
+
+- (void)testIgnoredProperty {
+    // ignored properties do not notify other accessors for the same row
 }
 @end

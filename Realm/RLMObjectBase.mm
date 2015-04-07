@@ -189,6 +189,11 @@ const NSUInteger RLMDescriptionMaxDepth = 5;
 }
 
 - (void)addObserver:(id)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(void *)context {
+    if (!_objectSchema[keyPath]) {
+        // FIXME: standalone needs to record/reregister
+        return [super addObserver:observer forKeyPath:keyPath options:options context:context];
+    }
+
     if (!_objectSchema->_observers) {
         _objectSchema->_observers = [NSMutableDictionary new];
     }
@@ -204,13 +209,13 @@ const NSUInteger RLMDescriptionMaxDepth = 5;
     info.options = options;
     info.context = context;
     info.obj = self;
-    if (options & NSKeyValueObservingOptionOld) {
-        info.oldValue = [self valueForKey:keyPath];
-    }
     info.key = keyPath;
     info.column = _objectSchema[keyPath].column;
     [observers addObject:info];
 
+    if (options & NSKeyValueObservingOptionOld) {
+        info.oldValue = [self valueForKey:keyPath];
+    }
     if (options & NSKeyValueObservingOptionInitial) {
         [observer observeValueForKeyPath:keyPath ofObject:self change:nil context:context];
     }
@@ -225,12 +230,14 @@ const NSUInteger RLMDescriptionMaxDepth = 5;
         }
     }
 
-    NSString *msg = [NSString stringWithFormat:@"Cannot remove an observer <%@ %p> for the key path \"%@\" from <%@ %p> because it is not registered as an observer.",
-                     [observer class], observer, keyPath, self.class.className, self];
-    @throw [NSException exceptionWithName:NSRangeException reason:msg userInfo:nil];
+    [super removeObserver:observer forKeyPath:keyPath];
 }
 
 - (void)willChangeValueForKey:(NSString *)key {
+    if (!_objectSchema[key]) {
+        return [super willChangeValueForKey:key];
+    }
+
     for (RLMObservationInfo *info in _objectSchema->_observers[key]) {
         if (info.obj->_row.get_index() == _row.get_index()) {
             RLMWillChange(info, key);
@@ -239,6 +246,10 @@ const NSUInteger RLMDescriptionMaxDepth = 5;
 }
 
 - (void)didChangeValueForKey:(NSString *)key {
+    if (!_objectSchema[key]) {
+        return [super didChangeValueForKey:key];
+    }
+
     id value = [self valueForKey:key];
 
     for (RLMObservationInfo *info in _objectSchema->_observers[key]) {
