@@ -19,12 +19,12 @@
 #import "RLMObject_Private.hpp"
 
 #import "RLMAccessor.h"
+#import "RLMArray.h"
 #import "RLMObjectSchema_Private.hpp"
+#import "RLMObjectStore.h"
 #import "RLMProperty_Private.h"
 #import "RLMRealm_Private.hpp"
 #import "RLMSchema_Private.h"
-
-#import "RLMObjectStore.h"
 #import "RLMSwiftSupport.h"
 #import "RLMUtil.hpp"
 
@@ -182,8 +182,9 @@ const NSUInteger RLMDescriptionMaxDepth = 5;
 }
 
 - (id)mutableArrayValueForKey:(NSString *)key {
-    if (_objectSchema[key].type == RLMPropertyTypeArray) {
-        return [self valueForKey:key];
+    id obj = [self valueForKey:key];
+    if ([obj isKindOfClass:[RLMArray class]]) {
+        return obj;
     }
     return [super mutableArrayValueForKey:key];
 }

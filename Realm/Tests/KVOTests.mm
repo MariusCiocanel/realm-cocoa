@@ -155,7 +155,6 @@ public:
 } while (false)
 
 // still to test:
-//   - standalone
 //   - standalone added to realm after observer added
 //   - keypaths
 //   - Prior called at right time

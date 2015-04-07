@@ -33,21 +33,18 @@
 //
 @implementation RLMArrayLinkView {
     realm::LinkViewRef _backingLinkView;
+    RLMRealm *_realm;
     RLMObjectSchema *_objectSchema;
-    RLMObjectBase *_parentObject;
-    NSString *_key;
 }
 
 + (RLMArrayLinkView *)arrayWithObjectClassName:(NSString *)objectClassName
                                           view:(realm::LinkViewRef)view
                                   parentObject:(RLMObjectBase *)object
                                            key:(NSString *)key {
-    RLMArrayLinkView *ar = [[RLMArrayLinkView alloc] initWithObjectClassName:objectClassName standalone:NO];
-    ar->_realm = object->_realm;
+    RLMArrayLinkView *ar = [[RLMArrayLinkView alloc] initWithObjectClassName:objectClassName parentObject:object key:key];
     ar->_backingLinkView = view;
+    ar->_realm = object->_realm;
     ar->_objectSchema = ar->_realm.schema[objectClassName];
-    ar->_parentObject = object;
-    ar->_key = key;
     return ar;
 }
 
@@ -165,19 +162,6 @@ static void changeArray(__unsafe_unretained RLMArrayLinkView *const ar, NSKeyVal
     return RLMCreateObjectAccessor(_realm, _objectSchema, _backingLinkView->get(index).get_index());
 }
 
-- (void)addObject:(RLMObject *)object {
-    RLMLinkViewArrayValidateInWriteTransaction(self);
-    RLMValidateObjectClass(object, self.objectClassName);
-
-    if (object->_realm != self.realm) {
-        [self.realm addObject:object];
-    }
-
-    changeArray(self, NSKeyValueChangeInsertion, _backingLinkView->size(), ^{
-        _backingLinkView->add(object->_row.get_index());
-    });
-}
-
 - (void)insertObject:(RLMObject *)object atIndex:(NSUInteger)index {
     RLMLinkViewArrayValidateInWriteTransaction(self);
     RLMValidateObjectClass(object, self.objectClassName);
@@ -204,17 +188,6 @@ static void changeArray(__unsafe_unretained RLMArrayLinkView *const ar, NSKeyVal
     changeArray(self, NSKeyValueChangeRemoval, index, ^{
         _backingLinkView->remove(index);
     });
-}
-
-- (void)removeLastObject {
-    RLMLinkViewArrayValidateInWriteTransaction(self);
-
-    size_t size = _backingLinkView->size();
-    if (size > 0){
-        changeArray(self, NSKeyValueChangeRemoval, size - 1, ^{
-            _backingLinkView->remove(size-1);
-        });
-    }
 }
 
 - (void)removeAllObjects {
