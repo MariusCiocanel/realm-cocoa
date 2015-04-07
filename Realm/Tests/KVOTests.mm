@@ -77,7 +77,7 @@ RLM_ARRAY_TYPE(KVOObject)
 @end
 
 @interface KVOTests : RLMTestCase
-- (id)objectToObserveForObject:(id)obj;
+- (id)observableForObject:(id)obj;
 @end
 
 struct KVONotification {
@@ -98,7 +98,7 @@ public:
 
     KVORecorder(id observer, id obj, NSString *keyPath, int options = NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew)
     : _observer(observer)
-    , _obj([observer objectToObserveForObject:obj])
+    , _obj([observer observableForObject:obj])
     , _keyPath(keyPath)
     , _mutationRealm([obj respondsToSelector:@selector(realm)] ? (RLMRealm *)[obj realm] : nil)
     , _observationRealm([_obj respondsToSelector:@selector(realm)] ? (RLMRealm *)[_obj realm] : nil)
@@ -128,7 +128,7 @@ public:
     (*static_cast<KVORecorder *>(context))(keyPath, object, change);
 }
 
-- (id)objectToObserveForObject:(id)obj {
+- (id)observableForObject:(id)obj {
     return obj;
 }
 @end
@@ -436,7 +436,7 @@ public:
     {
         KVORecorder r(self, obj, @"objectCol");
         obj.objectCol = obj;
-        AssertChanged(r, 0U, NSNull.null, [self objectToObserveForObject:obj]);
+        AssertChanged(r, 0U, NSNull.null, [self observableForObject:obj]);
     }
 
     { // should be testing assignment, not mutation
@@ -485,6 +485,14 @@ public:
     obj.ignored = 10;
     AssertChanged(r, 0U, @0, @10);
 }
+
+//- (void)testObserveArrayCount {
+//    KVOObject *obj = [self createObject];
+//    KVORecorder r(self, obj, @"arrayCol.@count");
+//    id mutator = [obj mutableArrayValueForKey:@"arrayCol"];
+//    [mutator addObject:obj];
+//    AssertChanged(r, 0U, @0, @1);
+//}
 @end
 
 // Run the tests on a non-RLMObject to sanity-check that we're testing the
@@ -509,7 +517,7 @@ public:
 @interface KvoMultipleAccessorsTests : KVOSingleObjectTests
 @end
 @implementation KvoMultipleAccessorsTests
-- (id)objectToObserveForObject:(RLMObject *)obj {
+- (id)observableForObject:(RLMObject *)obj {
     RLMObject *copy = [[obj.objectSchema.accessorClass alloc] initWithRealm:obj.realm schema:obj.objectSchema];
     copy->_row = obj->_row;
     return copy;
@@ -538,7 +546,7 @@ public:
     [super tearDown];
 }
 
-- (id)objectToObserveForObject:(RLMObject *)obj {
+- (id)observableForObject:(RLMObject *)obj {
     [self.realm commitWriteTransaction];
     [self.realm beginWriteTransaction];
 
