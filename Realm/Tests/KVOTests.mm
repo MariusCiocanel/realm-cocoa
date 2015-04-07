@@ -33,6 +33,7 @@ RLM_ARRAY_TYPE(KVOObject)
 
 @interface KVOObject : RLMObject
 @property int pk; // Primary key for isEqual:
+@property int ignored;
 
 @property BOOL                 boolCol;
 @property int16_t              int16Col;
@@ -51,9 +52,14 @@ RLM_ARRAY_TYPE(KVOObject)
 + (NSString *)primaryKey {
     return @"pk";
 }
++ (NSArray *)ignoredProperties {
+    return @[@"ignored"];
+}
 @end
 
 @interface PlainKVOObject : NSObject
+@property int ignored;
+
 @property BOOL            boolCol;
 @property int16_t         int16Col;
 @property int32_t         int32Col;
@@ -173,6 +179,19 @@ public:
                                                        @NO, @1, @2, @3, @0, @0, @NO, @"",
                                                        NSData.data, [NSDate dateWithTimeIntervalSinceReferenceDate:0],
                                                        NSNull.null, NSNull.null]];
+}
+
+- (void)testRegisterForUnknownProperty {
+    KVOObject *obj = [self createObject];
+
+    XCTAssertNoThrow([obj addObserver:self forKeyPath:@"non-existent" options:0 context:nullptr]);
+    XCTAssertNoThrow([obj removeObserver:self forKeyPath:@"non-existent"]);
+
+    XCTAssertNoThrow([obj addObserver:self forKeyPath:@"non-existent" options:NSKeyValueObservingOptionOld context:nullptr]);
+    XCTAssertNoThrow([obj removeObserver:self forKeyPath:@"non-existent"]);
+
+    XCTAssertNoThrow([obj addObserver:self forKeyPath:@"non-existent" options:NSKeyValueObservingOptionPrior context:nullptr]);
+    XCTAssertNoThrow([obj removeObserver:self forKeyPath:@"non-existent"]);
 }
 
 - (void)testRemoveObserver {
@@ -457,6 +476,13 @@ public:
         XCTAssertEqual([note->change[NSKeyValueChangeKindKey] intValue], NSKeyValueChangeReplacement);
         XCTAssertEqualObjects(note->change[NSKeyValueChangeIndexesKey], [NSIndexSet indexSetWithIndex:0]);
     }
+}
+
+- (void)testIgnoredProperty {
+    KVOObject *obj = [self createObject];
+    KVORecorder r(self, obj, @"ignored");
+    obj.ignored = 10;
+    AssertChanged(r, 0U, @0, @10);
 }
 @end
 
